@@ -1,5 +1,7 @@
 namespace Kira;
 
+using System;
+
 [Category("Kira")]
 public sealed class CityBuilder : Component
 {
@@ -23,12 +25,14 @@ public sealed class CityBuilder : Component
 
     private Vector2 MousePos { get; set; }
 
+    public bool IsOnGridSlot { get; set; }
+    public Vector2Int GridSelecting { get; set; }
+
     protected override void OnUpdate()
     {
         UpdateMousePos();
-
-
         DrawGrid();
+        GetGridNode(Vector2.Zero);
     }
 
     protected override void DrawGizmos()
@@ -70,7 +74,20 @@ public sealed class CityBuilder : Component
         {
             for (int y = 0; y < GridCols; y++)
             {
-                DrawGridText(x, y);
+                if (IsOnGridSlot && (GridSelecting.x == x && GridSelecting.y == y))
+                {
+                    Gizmo.Draw.Color = Color.Green;
+                }
+                else
+                {
+                    Gizmo.Draw.Color = LineColor;
+                }
+
+                using (Gizmo.Scope("Grid"))
+                {
+                    DrawGridText(x, y);
+                }
+
                 lines.Add(CreateLine(x, y, Vector3.Forward));
                 lines.Add(CreateLine(x, y, Vector3.Left));
             }
@@ -94,14 +111,46 @@ public sealed class CityBuilder : Component
 
     public void GetGridNode(Vector2 pos)
     {
-        // Check min and max boundry first
+        var startPos = Transform.Position;
+        var mult = GridScale + Offset;
+
+        // Calculate X
+        var maxX = startPos.x;
+        maxX += GridRows * mult;
+        var curX = MousePos.x / maxX * GridRows;
+
+        // Calculate Y
+        var maxY = startPos.y;
+        maxY += GridCols * mult;
+        var curY = MousePos.y / maxY * GridCols;
+
+        // True if cursor is out of bounds i.e outside of the grid area
+        var isOutX = curX > GridRows || curX < 0;
+        var isOutY = curY > GridCols || curY < 0;
+
+
+        // Cursor is inside the grid area
+        IsOnGridSlot = !(isOutX || isOutY);
+
+        if (!IsOnGridSlot) return;
+        // Log.Info(curX + ", " + curY);
+
+        GridSelecting = new Vector2Int(curX.FloorToInt(), curY.FloorToInt());
+
+        Gizmo.Draw.Color = Color.Green;
+        startPos.y -= 10;
+        Gizmo.Draw.Line(startPos, startPos.WithX(maxX));
     }
 
     private void DrawGridText(int x, int y)
     {
         var t = GameObject.Transform.World;
-        t.Position.x += x * (GridScale + Offset) + GridScale / 2;
-        t.Position.y += y * (GridScale + Offset) + GridScale / 2;
+        float halfScale = GridScale / 2;
+        var mult = GridScale + Offset;
+
+        t.Position.x += x * mult + halfScale;
+        t.Position.y += y * mult + halfScale;
+
         var angles = t.Rotation.Angles();
         angles.yaw = 90;
         angles.pitch = 180;
