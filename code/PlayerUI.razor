@@ -1,0 +1,37 @@
+@using System
+@using Kira
+@inherits PanelComponent
+
+<root>
+    <div class="info">
+        <div class="field">
+            cursor @($"{MousePos.x:F0}, {MousePos.y:F0}")
+        </div>
+        <div class="field">
+            world @($"{WorldPos.x:F0}, {WorldPos.y:F0}")
+        </div>
+    </div>
+</root>
+
+@code
+{
+    public Vector2 MousePos { get; set; }
+    public Vector2 WorldPos { get; set; }
+
+    protected override void OnUpdate()
+    {
+        var cam = Scene.Components.GetAll<CameraComponent>().FirstOrDefault();
+        MousePos = Mouse.Position;
+
+        if (cam == null)
+        {
+            Log.Info("city builder not found");
+            return;
+        }
+
+        var ray = cam.ScreenPixelToRay(MousePos);
+        WorldPos = ray.Position;
+    }
+
+    protected override int BuildHash() => HashCode.Combine(MousePos, WorldPos);
+}

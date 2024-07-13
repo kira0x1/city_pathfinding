@@ -1,0 +1,43 @@
+PlayerUI {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  border-radius: 20px;
+  pointer-events: all;
+
+  .info {
+    background-color: #333;
+
+    position: absolute;
+    top: 10px;
+    left: 10px;
+
+    padding: 20px;
+    width: 200px;
+    height: 200px;
+
+    flex-direction: column;
+    gap: 5px;
+    font-size: 18px;
+    font-family: Poppins;
+    border-radius: 5px;
+    color: #fff;
+  }
+
+  .field {
+    gap: 15px;
+    width: 100%;
+    height: 40px;
+    align-items: center;
+  }
+
+  .title {
+    color: #fff;
+    font-size: 24px;
+  }
+}
