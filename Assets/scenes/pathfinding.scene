@@ -87,22 +87,6 @@
           "__guid": "a4607397-25bc-4c80-91a6-049c7f01b061"
         }
       ]
-    },
-    {
-      "__guid": "310f67fa-e80d-4c63-a230-600e8cf7e9f9",
-      "Flags": 0,
-      "Name": "Cube",
-      "Enabled": true,
-      "Components": [
-        {
-          "__type": "Sandbox.ModelRenderer",
-          "__guid": "ebc3a1f4-d2dd-479a-89ea-5c97de4b8f6a",
-          "BodyGroups": 18446744073709551615,
-          "Model": "models/dev/box.vmdl",
-          "RenderType": "On",
-          "Tint": "1,1,1,1"
-        }
-      ]
     }
   ],
   "SceneProperties": {

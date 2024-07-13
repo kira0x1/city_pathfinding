@@ -1,7 +1,5 @@
 namespace Kira;
 
-using System;
-
 [Category("Kira")]
 public sealed class CityBuilder : Component
 {
@@ -32,12 +30,12 @@ public sealed class CityBuilder : Component
     {
         UpdateMousePos();
         DrawGrid();
-        GetGridNode(Vector2.Zero);
+        HandleGridHovering();
     }
 
     protected override void DrawGizmos()
     {
-        DrawGrid();
+        // DrawGrid();
     }
 
     private void UpdateMousePos()
@@ -109,37 +107,41 @@ public sealed class CityBuilder : Component
         return lines;
     }
 
-    public void GetGridNode(Vector2 pos)
+    public void HandleGridHovering()
     {
-        var startPos = Transform.Position;
         var mult = GridScale + Offset;
 
         // Calculate X
-        var maxX = startPos.x;
-        maxX += GridRows * mult;
-        var curX = MousePos.x / maxX * GridRows;
+        var maxX = GridRows * mult;
+
+        var mpos = MousePos;
+        mpos -= new Vector2(Transform.Position.x, Transform.Position.y);
+
+        var curX = mpos.x / maxX * GridRows;
 
         // Calculate Y
-        var maxY = startPos.y;
-        maxY += GridCols * mult;
-        var curY = MousePos.y / maxY * GridCols;
+        var maxY = GridCols * mult;
+        var curY = mpos.y / maxY * GridCols;
 
         // True if cursor is out of bounds i.e outside of the grid area
         var isOutX = curX > GridRows || curX < 0;
         var isOutY = curY > GridCols || curY < 0;
 
-
         // Cursor is inside the grid area
         IsOnGridSlot = !(isOutX || isOutY);
 
         if (!IsOnGridSlot) return;
-        // Log.Info(curX + ", " + curY);
 
         GridSelecting = new Vector2Int(curX.FloorToInt(), curY.FloorToInt());
 
         Gizmo.Draw.Color = Color.Green;
-        startPos.y -= 10;
-        Gizmo.Draw.Line(startPos, startPos.WithX(maxX));
+        var linePos = Transform.Position;
+        linePos.x -= 20f;
+        linePos.y -= 20f;
+
+
+        Gizmo.Draw.Line(linePos, linePos.WithX(Transform.Position.x + maxX));
+        Gizmo.Draw.Line(linePos, linePos.WithY(Transform.Position.y + maxY));
     }
 
     private void DrawGridText(int x, int y)
@@ -161,7 +163,7 @@ public sealed class CityBuilder : Component
 
     private Line CreateLine(int x, int y, Vector3 direction)
     {
-        var pos = Transform.Position;
+        var pos = Transform.LocalPosition;
         pos.x += x * (GridScale + Offset);
         pos.y += y * (GridScale + Offset);
         var yline = new Line(pos, direction, GridScale);
