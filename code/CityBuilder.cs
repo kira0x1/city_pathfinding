@@ -1,5 +1,7 @@
 namespace Kira;
 
+using System;
+
 [Category("Kira")]
 public sealed class CityBuilder : Component
 {
@@ -9,17 +11,20 @@ public sealed class CityBuilder : Component
     [Property, Range(1, 10)]
     public int GridRows { get; set; } = 6;
 
-    [Property]
+    [Property, Range(0, 40)]
     public float Offset { get; set; } = 0f;
 
-    [Property, Range(1, 100)]
+    [Property, Range(1, 500)]
     public float GridScale { get; set; } = 20f;
 
-    [Property, Category("Lines")]
-    public Color LineColor { get; set; } = Color.White;
+    [Property]
+    public Color CellColor { get; set; } = Color.White;
 
-    [Property, Category("Lines"), Range(0.1f, 10f)]
-    public float LineThickness { get; set; } = 1f;
+    [Property]
+    public Color CellTextColor { get; set; } = Color.White;
+
+    [Property]
+    public Color HoverColor { get; set; } = Color.Green;
 
     private Vector2 MousePos { get; set; }
 
@@ -31,11 +36,6 @@ public sealed class CityBuilder : Component
         UpdateMousePos();
         DrawGrid();
         HandleGridHovering();
-    }
-
-    protected override void DrawGizmos()
-    {
-        // DrawGrid();
     }
 
     private void UpdateMousePos()
@@ -54,13 +54,44 @@ public sealed class CityBuilder : Component
 
     private void DrawGrid()
     {
-        List<Line> gridLines = CreateGridLines();
-
         using (Gizmo.Scope("Grid"))
         {
-            Gizmo.Draw.LineThickness = LineThickness;
-            Gizmo.Draw.Color = LineColor;
-            Gizmo.Draw.Lines(gridLines);
+            Gizmo.Draw.Color = CellColor;
+            DrawCells();
+        }
+    }
+
+    private void DrawCells()
+    {
+        for (int x = 0; x < GridRows; x++)
+        {
+            for (int y = 0; y < GridCols; y++)
+            {
+                using (Gizmo.Scope("Grid"))
+                {
+                    if (IsOnGridSlot && (GridSelecting.x == x && GridSelecting.y == y))
+                    {
+                        Gizmo.Draw.Color = HoverColor;
+                    }
+                    else
+                    {
+                        Gizmo.Draw.Color = CellColor;
+                    }
+
+                    var pos = Transform.LocalPosition;
+                    pos.x += x * (GridScale + Offset);
+                    pos.y += y * (GridScale + Offset);
+
+                    var box = new BBox(pos, pos + GridScale);
+                    Gizmo.Draw.SolidBox(box);
+                }
+
+                using (Gizmo.Scope("CellText"))
+                {
+                    Gizmo.Draw.Color = CellTextColor;
+                    DrawGridText(x, y);
+                }
+            }
         }
     }
 
@@ -78,7 +109,7 @@ public sealed class CityBuilder : Component
                 }
                 else
                 {
-                    Gizmo.Draw.Color = LineColor;
+                    Gizmo.Draw.Color = CellColor;
                 }
 
                 using (Gizmo.Scope("Grid"))
@@ -86,25 +117,26 @@ public sealed class CityBuilder : Component
                     DrawGridText(x, y);
                 }
 
-                lines.Add(CreateLine(x, y, Vector3.Forward));
-                lines.Add(CreateLine(x, y, Vector3.Left));
+                if (y > 0) lines.Add(CreateLine(x, y, Vector3.Forward));
+                if (x > 0) lines.Add(CreateLine(x, y, Vector3.Left));
+
+                // lines.Add(CreateLine(x, y, Vector3.Forward));
+                // lines.Add(CreateLine(x, y + 1, Vector3.Forward));
+                // lines.Add(CreateLine(x, y, Vector3.Left));
+                // lines.Add(CreateLine(x + 1, y, Vector3.Left));
             }
         }
 
-        // Left Boundry
-        for (int i = 0; i < GridRows; i++)
-        {
-            lines.Add(CreateLine(i, GridCols, Vector3.Forward));
-        }
-
-        // Top Boundry
-        for (int i = 0; i < GridCols; i++)
-        {
-            lines.Add(CreateLine(GridRows, i, Vector3.Left));
-        }
-
-
         return lines;
+    }
+
+    private Line CreateLine(int x, int y, Vector3 direction)
+    {
+        var pos = Transform.LocalPosition;
+        pos.x += x * (GridScale + Offset);
+        pos.y += y * (GridScale + Offset);
+        var yline = new Line(pos, direction, GridScale);
+        return yline;
     }
 
     public void HandleGridHovering()
@@ -133,12 +165,14 @@ public sealed class CityBuilder : Component
         if (!IsOnGridSlot) return;
 
         GridSelecting = new Vector2Int(curX.FloorToInt(), curY.FloorToInt());
+    }
 
+    private void DrawGridLengths(float maxX, float maxY)
+    {
         Gizmo.Draw.Color = Color.Green;
         var linePos = Transform.Position;
         linePos.x -= 20f;
         linePos.y -= 20f;
-
 
         Gizmo.Draw.Line(linePos, linePos.WithX(Transform.Position.x + maxX));
         Gizmo.Draw.Line(linePos, linePos.WithY(Transform.Position.y + maxY));
@@ -158,15 +192,6 @@ public sealed class CityBuilder : Component
         angles.pitch = 180;
         t.Rotation = angles.ToRotation();
 
-        Gizmo.Draw.WorldText($"{x},{y}", t, size: 22);
-    }
-
-    private Line CreateLine(int x, int y, Vector3 direction)
-    {
-        var pos = Transform.LocalPosition;
-        pos.x += x * (GridScale + Offset);
-        pos.y += y * (GridScale + Offset);
-        var yline = new Line(pos, direction, GridScale);
-        return yline;
+        Gizmo.Draw.Text($"{x},{y}", t, size: 26);
     }
 }

@@ -5,7 +5,7 @@
       "__guid": "d9838965-330f-49ae-a90d-8c2c019eb17d",
       "Flags": 0,
       "Name": "Main Camera",
-      "Position": "499.2279,500,884.7698",
+      "Position": "500.628,500,884.7698",
       "Rotation": "0,0.7071068,0,0.7071068",
       "Enabled": true,
       "Components": [
@@ -58,12 +58,13 @@
         {
           "__type": "Kira.CityBuilder",
           "__guid": "da89e7bf-9a4a-49cb-be29-63da957ba61c",
-          "GridCols": 10,
-          "GridRows": 10,
-          "GridScale": 100,
-          "LineColor": "0.87907,0.87907,0.87907,1",
-          "LineThickness": 4.76,
-          "Offset": 0
+          "CellColor": "0.76279,0.38317,0.38317,1",
+          "CellTextColor": "1,1,1,1",
+          "GridCols": 5,
+          "GridRows": 4,
+          "GridScale": 195.34799,
+          "HoverColor": "0.382,0.75349,0.382,1",
+          "Offset": 6.39
         }
       ]
     },
