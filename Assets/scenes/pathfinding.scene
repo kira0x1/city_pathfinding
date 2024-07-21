@@ -58,12 +58,12 @@
         {
           "__type": "Kira.CityBuilder",
           "__guid": "da89e7bf-9a4a-49cb-be29-63da957ba61c",
-          "CellColor": "0.76279,0.38317,0.38317,1",
+          "CellColor": "0.17674,0.17674,0.17674,1",
           "CellTextColor": "1,1,1,1",
           "GridCols": 5,
           "GridRows": 4,
           "GridScale": 195.34799,
-          "HoverColor": "0.382,0.75349,0.382,1",
+          "HoverColor": "0.10698,0.10698,0.10698,1",
           "Offset": 6.39
         }
       ]

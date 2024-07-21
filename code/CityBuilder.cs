@@ -1,7 +1,5 @@
 namespace Kira;
 
-using System;
-
 [Category("Kira")]
 public sealed class CityBuilder : Component
 {
@@ -27,9 +25,10 @@ public sealed class CityBuilder : Component
     public Color HoverColor { get; set; } = Color.Green;
 
     private Vector2 MousePos { get; set; }
-
     public bool IsOnGridSlot { get; set; }
-    public Vector2Int GridSelecting { get; set; }
+
+    public Vector2Int CellHovering { get; set; }
+    public Vector2Int CellSelected { get; set; }
 
     protected override void OnUpdate()
     {
@@ -67,76 +66,33 @@ public sealed class CityBuilder : Component
         {
             for (int y = 0; y < GridCols; y++)
             {
-                using (Gizmo.Scope("Grid"))
-                {
-                    if (IsOnGridSlot && (GridSelecting.x == x && GridSelecting.y == y))
-                    {
-                        Gizmo.Draw.Color = HoverColor;
-                    }
-                    else
-                    {
-                        Gizmo.Draw.Color = CellColor;
-                    }
-
-                    var pos = Transform.LocalPosition;
-                    pos.x += x * (GridScale + Offset);
-                    pos.y += y * (GridScale + Offset);
-
-                    var box = new BBox(pos, pos + GridScale);
-                    Gizmo.Draw.SolidBox(box);
-                }
-
-                using (Gizmo.Scope("CellText"))
-                {
-                    Gizmo.Draw.Color = CellTextColor;
-                    DrawGridText(x, y);
-                }
+                DrawCell(x, y);
             }
         }
     }
 
-    private List<Line> CreateGridLines()
+    private void DrawCell(int x, int y)
     {
-        List<Line> lines = new List<Line>();
+        // Set cell color on hover
+        Color cellColor = IsOnGridSlot && CellHovering.x == x && CellHovering.y == y ? HoverColor : CellColor;
 
-        for (int x = 0; x < GridRows; x++)
+        using (Gizmo.Scope("Grid"))
         {
-            for (int y = 0; y < GridCols; y++)
-            {
-                if (IsOnGridSlot && (GridSelecting.x == x && GridSelecting.y == y))
-                {
-                    Gizmo.Draw.Color = Color.Green;
-                }
-                else
-                {
-                    Gizmo.Draw.Color = CellColor;
-                }
+            Gizmo.Draw.Color = cellColor;
 
-                using (Gizmo.Scope("Grid"))
-                {
-                    DrawGridText(x, y);
-                }
+            var pos = Transform.LocalPosition;
+            pos.x += x * (GridScale + Offset);
+            pos.y += y * (GridScale + Offset);
 
-                if (y > 0) lines.Add(CreateLine(x, y, Vector3.Forward));
-                if (x > 0) lines.Add(CreateLine(x, y, Vector3.Left));
-
-                // lines.Add(CreateLine(x, y, Vector3.Forward));
-                // lines.Add(CreateLine(x, y + 1, Vector3.Forward));
-                // lines.Add(CreateLine(x, y, Vector3.Left));
-                // lines.Add(CreateLine(x + 1, y, Vector3.Left));
-            }
+            var box = new BBox(pos, pos + GridScale);
+            Gizmo.Draw.SolidBox(box);
         }
 
-        return lines;
-    }
-
-    private Line CreateLine(int x, int y, Vector3 direction)
-    {
-        var pos = Transform.LocalPosition;
-        pos.x += x * (GridScale + Offset);
-        pos.y += y * (GridScale + Offset);
-        var yline = new Line(pos, direction, GridScale);
-        return yline;
+        using (Gizmo.Scope("CellText"))
+        {
+            Gizmo.Draw.Color = CellTextColor;
+            DrawGridText(x, y);
+        }
     }
 
     public void HandleGridHovering()
@@ -164,18 +120,7 @@ public sealed class CityBuilder : Component
 
         if (!IsOnGridSlot) return;
 
-        GridSelecting = new Vector2Int(curX.FloorToInt(), curY.FloorToInt());
-    }
-
-    private void DrawGridLengths(float maxX, float maxY)
-    {
-        Gizmo.Draw.Color = Color.Green;
-        var linePos = Transform.Position;
-        linePos.x -= 20f;
-        linePos.y -= 20f;
-
-        Gizmo.Draw.Line(linePos, linePos.WithX(Transform.Position.x + maxX));
-        Gizmo.Draw.Line(linePos, linePos.WithY(Transform.Position.y + maxY));
+        CellHovering = new Vector2Int(curX.FloorToInt(), curY.FloorToInt());
     }
 
     private void DrawGridText(int x, int y)
