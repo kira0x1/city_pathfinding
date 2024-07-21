@@ -1,5 +1,7 @@
 namespace Kira;
 
+using System;
+
 [Category("Kira")]
 public sealed class CityBuilder : Component
 {
@@ -25,10 +27,23 @@ public sealed class CityBuilder : Component
     public Color HoverColor { get; set; } = Color.Green;
 
     private Vector2 MousePos { get; set; }
+
     public bool IsOnGridSlot { get; set; }
 
     public Vector2Int CellHovering { get; set; }
     public Vector2Int CellSelected { get; set; }
+
+    [Property, Range(0.1f, 5f)]
+    public float TextScale { get; set; } = 1f;
+
+    private enum PivotModes
+    {
+        CENTER,
+        TOPLEFT
+    }
+
+    [Property]
+    private PivotModes PivotMode { get; set; }
 
     protected override void OnUpdate()
     {
@@ -66,7 +81,16 @@ public sealed class CityBuilder : Component
         {
             for (int y = 0; y < GridCols; y++)
             {
-                DrawCell(x, y);
+                int cellX = x;
+                int cellY = y;
+
+                if (PivotMode == PivotModes.CENTER)
+                {
+                    cellX = x - GridRows;
+                    cellY = y - GridCols;
+                }
+
+                DrawCell(cellX, cellY);
             }
         }
     }
@@ -76,23 +100,58 @@ public sealed class CityBuilder : Component
         // Set cell color on hover
         Color cellColor = IsOnGridSlot && CellHovering.x == x && CellHovering.y == y ? HoverColor : CellColor;
 
+        // Cell
         using (Gizmo.Scope("Grid"))
         {
             Gizmo.Draw.Color = cellColor;
 
-            var pos = Transform.LocalPosition;
-            pos.x += x * (GridScale + Offset);
-            pos.y += y * (GridScale + Offset);
+            var startpos = Transform.LocalPosition;
+            var pos = startpos;
 
-            var box = new BBox(pos, pos + GridScale);
+            if (PivotMode == PivotModes.CENTER)
+            {
+                pos.x += x * (GridScale + Offset) + (GridScale / 2f) * (GridCols / 2f);
+                pos.y += y * (GridScale + Offset) + (GridScale / 2f) * (GridRows / 2f);
+            }
+            else
+            {
+                pos.x += x * (GridScale + Offset);
+                pos.y += y * (GridScale + Offset);
+            }
+
+
+            var maxpos = pos + GridScale;
+            maxpos.z = pos.z - 90f;
+            pos.z -= 100f;
+            var box = new BBox(pos, maxpos);
+            // Gizmo.Draw.IgnoreDepth = true;
+            // Gizmo.Draw.IgnoreDepth = true;
             Gizmo.Draw.SolidBox(box);
         }
 
+        // Cell Text
         using (Gizmo.Scope("CellText"))
         {
+            // Gizmo.Draw.IgnoreDepth = true;
             Gizmo.Draw.Color = CellTextColor;
             DrawGridText(x, y);
         }
+    }
+
+    public Vector3 GetPos(int x, int y)
+    {
+        var startpos = Transform.LocalPosition;
+
+        if (PivotMode == PivotModes.CENTER)
+        {
+            startpos.x -= GridScale + Offset;
+        }
+
+        var pos = startpos;
+        pos.x += x * (GridScale + Offset);
+        pos.y += y * (GridScale + Offset);
+
+        return pos;
     }
 
     public void HandleGridHovering()
@@ -126,17 +185,30 @@ public sealed class CityBuilder : Component
     private void DrawGridText(int x, int y)
     {
         var t = GameObject.Transform.World;
+
         float halfScale = GridScale / 2;
         var mult = GridScale + Offset;
 
-        t.Position.x += x * mult + halfScale;
-        t.Position.y += y * mult + halfScale;
+        Vector3 startPos = t.Position;
+
+        if (PivotMode == PivotModes.CENTER)
+        {
+            startPos.x += x * mult + (GridScale + Offset + halfScale);
+            startPos.y += y * mult + (GridScale + Offset + halfScale);
+        }
+        else
+        {
+            startPos.x += x * mult + halfScale;
+            startPos.y += y * mult + halfScale;
+        }
+
+        t.Position = startPos;
 
         var angles = t.Rotation.Angles();
         angles.yaw = 90;
         angles.pitch = 180;
         t.Rotation = angles.ToRotation();
 
-        Gizmo.Draw.Text($"{x},{y}", t, size: 26);
+        Gizmo.Draw.WorldText($"{x},{y}", t.WithPosition(t.Position.WithZ(t.Position.z + 100f)), size: (GridScale / 2) / TextScale);
     }
 }

@@ -1,5 +1,5 @@
 {
-  "__guid": "9ef64d46-463b-4e75-83b6-5cf7a972768b",
+  "__guid": "6e58a714-fefd-4c17-9127-fd089d87824b",
   "GameObjects": [
     {
       "__guid": "d9838965-330f-49ae-a90d-8c2c019eb17d",
@@ -62,9 +62,11 @@
           "CellTextColor": "1,1,1,1",
           "GridCols": 5,
           "GridRows": 4,
-          "GridScale": 195.34799,
+          "GridScale": 137.22,
           "HoverColor": "0.10698,0.10698,0.10698,1",
-          "Offset": 6.39
+          "Offset": 6.39,
+          "PivotMode": "CENTER",
+          "TextScale": 1
         }
       ]
     },
