@@ -9,19 +9,22 @@ public sealed class CityBuilder : Component
     [Property, Range(1, 10)]
     public int GridRows { get; set; } = 6;
 
-    [Property, Range(0, 40)]
+    [Property, Range(0, 20)]
     public float Offset { get; set; } = 0f;
 
-    [Property, Range(1, 500)]
+    [Property, Range(1, 100)]
     public float GridScale { get; set; } = 20f;
 
-    [Property]
+    [Property, Range(0, 100), Category("Cell")]
+    public float CellHeight { get; set; } = 1.0f;
+
+    [Property, Category("Cell")]
     public Color CellColor { get; set; } = Color.White;
 
-    [Property]
+    [Property, Category("Cell")]
     public Color CellTextColor { get; set; } = Color.White;
 
-    [Property]
+    [Property, Category("Cell")]
     public Color HoverColor { get; set; } = Color.Green;
 
     private Vector2 MousePos { get; set; }
@@ -29,6 +32,15 @@ public sealed class CityBuilder : Component
 
     public Vector2Int CellHovering { get; set; }
     public Vector2Int CellSelected { get; set; }
+
+    private enum PivotModes
+    {
+        CENTER,
+        TOPLEFT
+    }
+
+    [Property]
+    private PivotModes PivotMode { get; set; }
 
     protected override void OnUpdate()
     {
@@ -75,24 +87,56 @@ public sealed class CityBuilder : Component
     {
         // Set cell color on hover
         Color cellColor = IsOnGridSlot && CellHovering.x == x && CellHovering.y == y ? HoverColor : CellColor;
+        var pos = Transform.LocalPosition;
 
         using (Gizmo.Scope("Grid"))
         {
             Gizmo.Draw.Color = cellColor;
 
-            var pos = Transform.LocalPosition;
+
+            if (PivotMode == PivotModes.CENTER)
+            {
+                pos.x -= (GridScale + Offset) * GridRows / 2f;
+                pos.y -= (GridScale + Offset) * GridCols / 2f;
+            }
+
             pos.x += x * (GridScale + Offset);
             pos.y += y * (GridScale + Offset);
 
-            var box = new BBox(pos, pos + GridScale);
+            var min = pos;
+            min.z = pos.z;
+
+            var max = pos + GridScale;
+            max.z = pos.z + CellHeight;
+
+            var box = new BBox(min, max);
             Gizmo.Draw.SolidBox(box);
+
+            DrawGridLengths(box);
         }
 
         using (Gizmo.Scope("CellText"))
         {
             Gizmo.Draw.Color = CellTextColor;
-            DrawGridText(x, y);
+            DrawGridText(x, y, pos);
         }
+    }
+
+    private void DrawGridLengths(BBox box)
+    {
+        Gizmo.Draw.Color = Color.Green;
+        var linePos = Transform.Position;
+        linePos.x -= 5f;
+        linePos.y -= 5f;
+
+        if (PivotMode == PivotModes.CENTER)
+        {
+            linePos.x -= (GridScale + Offset) * GridRows / 2f;
+            linePos.y -= (GridScale + Offset) * GridCols / 2f;
+        }
+
+        Gizmo.Draw.Line(linePos, linePos.WithX(box.Maxs.x));
+        Gizmo.Draw.Line(linePos, linePos.WithY(box.Maxs.y));
     }
 
     public void HandleGridHovering()
@@ -123,7 +167,7 @@ public sealed class CityBuilder : Component
         CellHovering = new Vector2Int(curX.FloorToInt(), curY.FloorToInt());
     }
 
-    private void DrawGridText(int x, int y)
+    private void DrawGridText(int x, int y, Vector3 position)
     {
         var t = GameObject.Transform.World;
         float halfScale = GridScale / 2;
@@ -131,6 +175,12 @@ public sealed class CityBuilder : Component
 
         t.Position.x += x * mult + halfScale;
         t.Position.y += y * mult + halfScale;
+        if (PivotMode == PivotModes.CENTER)
+        {
+            t.Position.x -= (GridScale + Offset) * GridRows / 2f;
+            t.Position.y -= (GridScale + Offset) * GridCols / 2f;
+        }
+
 
         var angles = t.Rotation.Angles();
         angles.yaw = 90;
